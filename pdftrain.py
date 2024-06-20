@@ -55,11 +55,11 @@ def is_heading(span, average_size, next_line):
 
     if is_page_number(text):
         return False
-    if size > median_next_size * 1.15:
+    if size > median_next_size * 1.1:
         return True
-    if is_all_caps and size > median_next_size:
+    if is_all_caps and size >= median_next_size:
         return True
-    if is_bold and size > median_next_size:
+    if is_bold and size >= median_next_size:
         return True
     return False
 async def extract_text_by_section(doc):
@@ -109,7 +109,6 @@ async def process_pdf(pdf_path, output_text_path):
         text_file.write("".join(extracted_text))
     print('Processing complete.')
 
-# Usage
-pdf_path = './winata.pdf'
+pdf_path = './historypdf.pdf'
 output_text_path = './outputtext.txt'
 asyncio.run(process_pdf(pdf_path, output_text_path))
