@@ -41,11 +41,9 @@ def get_median_font_size(line):
             return font_size
 
 
-def is_heading(span, average_size, next_line):
+def is_heading(span, average_size, next_span):
     """Determine if a text span is likely a heading based on its formatting and relative size."""
-    median_next_size = get_median_font_size(next_line) if not next_line else average_size
-    if median_next_size is None:
-        return False
+    median_next_size = next_span['size'] if next_span else average_size
 
     text = span['text']
     size = span['size']
@@ -55,18 +53,28 @@ def is_heading(span, average_size, next_line):
 
     if is_page_number(text):
         return False
-    if size > median_next_size * 1.1:
+    if size > median_next_size * 1.15:
         return True
-    if is_all_caps and size >= median_next_size:
+    if is_all_caps and size >= median_next_size * 1.025:
         return True
-    if is_bold and size >= median_next_size:
+    if is_bold and size >= median_next_size* 1.025:
         return True
     return False
+
+def is_sentence_end(text):
+    """Check if the last non-whitespace character of the text is a sentence-ending punctuation mark."""
+    sentence_end_chars = ['.', '?', '!']
+    text = text.strip()
+    if text and text[-1] in sentence_end_chars:
+        return True
+    return False
+
 async def extract_text_by_section(doc):
     """Extract text from the PDF, identifying section headers to separate text by sections."""
     full_text = []
     current_section = []
     font_sizes = []
+    prev_formatting = None
 
     # First pass to gather average font size and filter out page numbers
     for page in doc:
@@ -85,16 +93,36 @@ async def extract_text_by_section(doc):
         blocks = page.get_text("dict")["blocks"]
         for b in blocks:
             if b['type'] == 0:  # Text block
-                for i,line in enumerate(b["lines"]):
-                    text_span = " ".join([fix_spacing(span['text']) for span in line["spans"] if not is_page_number(span['text'])])
-                    if is_heading(line["spans"][0],average_size, (line["spans"])):
-                        if current_section:
-                            full_text.append(" ".join(current_section))
-                            full_text.append("\n")  # Add extra newline to separate sections
-                            current_section = []
-                        full_text.append(text_span.upper() + "\n")  # Append the heading
-                    else:
-                        current_section.append(text_span)
+                for i, line in enumerate(b["lines"]):
+                    for j, span in enumerate(line["spans"]):
+                        if is_page_number(span['text']):
+                            continue
+                        text_span = fix_spacing(span['text'])
+                        formatting = {
+                            'bold': 'bold' in span['font'].lower(),
+                            'size': span['size']
+                        }
+                        next_span = line["spans"][j + 1] if j < len(line["spans"]) - 1 else None
+                        if is_heading(span, average_size, next_span):
+                            if current_section:
+                                full_text.append(" ".join(current_section))
+                                full_text.append("\n")  # Add extra newline to separate sections
+                                current_section = []
+                            full_text.append(text_span.upper() + "\n")  # Append the heading
+                            prev_formatting = formatting
+                        else:
+                            if prev_formatting and formatting == prev_formatting:
+                                if current_section and not is_sentence_end(current_section[-1]):
+                                    current_section[-1] += " " + text_span
+                                else:
+                                    current_section.append(text_span)
+                            else:
+                                if current_section:
+                                    full_text.append(" ".join(current_section))
+                                    full_text.append("\n")  # Add extra newline to separate sections
+                                    current_section = []
+                                current_section.append(text_span)
+                                prev_formatting = formatting
     if current_section:
         full_text.append(" ".join(current_section))
     return full_text
