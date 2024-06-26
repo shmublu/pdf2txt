@@ -1,4 +1,4 @@
-# PDF Line Classifier
+# PDF2Text
 
 This script parses a PDF file and classifies its lines into paragraphs or headers. The classified lines are then written to an output text file.
 
