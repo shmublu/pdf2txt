@@ -18,6 +18,7 @@ python parse_pdf.py /path/to/input.pdf /path/to/output.txt
 
 ### Optional Arguments
 --max_pages: Maximum number of pages to process (default: 100).
+
 --merge_headers: Whether to merge headers (default: True).
 
 ```sh
