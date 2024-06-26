@@ -1,3 +1,4 @@
+import argparse
 from collections import defaultdict
 import openparse
 
@@ -135,7 +136,16 @@ def parse_pdf(pdf_path, output_path, max_pages=100, merge_headers=True):
 
             output_file.write("\n")
 
-# Example usage
-basic_doc_path = "./barton.pdf"
-output_path = "./barton_lines_classified.txt"
-parse_pdf(basic_doc_path, output_path, merge_headers=True)
+def main():
+    parser = argparse.ArgumentParser(description="Parse PDF and classify lines.")
+    parser.add_argument("pdf_path", type=str, help="Path to the input PDF file.")
+    parser.add_argument("output_path", type=str, help="Path to the output text file.", nargs='?', default="output.txt")
+    parser.add_argument("--max_pages", type=int, help="Maximum number of pages to process.", default=100)
+    parser.add_argument("--merge_headers", type=bool, help="Whether to merge headers.", default=True)
+    
+    args = parser.parse_args()
+    
+    parse_pdf(args.pdf_path, args.output_path, args.max_pages, args.merge_headers)
+
+if __name__ == "__main__":
+    main()

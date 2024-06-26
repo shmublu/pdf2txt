@@ -13,7 +13,7 @@ This script parses a PDF file and classifies its lines into paragraphs or header
 The script can be executed from the command line. You need to provide the path to the input PDF file and optionally the output file name.
 
 ```sh
-python parse_pdf.py /path/to/input.pdf /path/to/output.txt
+python pdf2text.py /path/to/input.pdf /path/to/output.txt
 ```
 
 ### Optional Arguments
@@ -22,5 +22,5 @@ python parse_pdf.py /path/to/input.pdf /path/to/output.txt
 --merge_headers: Whether to merge headers (default: True).
 
 ```sh
-python parse_pdf.py /path/to/input.pdf /path/to/output.txt --max_pages 50 --merge_headers False
+python pdf2text.py /path/to/input.pdf /path/to/output.txt --max_pages 50 --merge_headers False
 ```
