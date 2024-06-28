@@ -1,6 +1,6 @@
-import argparse
 from collections import defaultdict
 import openparse
+import argparse
 
 def is_all_caps(text):
     return text.isupper()
@@ -34,29 +34,33 @@ def findCommonStyles(styles):
             break
     return commonStyles
 
-def group_lines(lines, tolerance=4):
+def custom_round(x, base=5):
+    return base * round(x/base)
+
+def group_lines(lines, tolerance=3, max_space=40):
     grouped_lines = []
-    current_group = []
-    current_y = None
-
+    lines.sort(key=lambda x: (-int(custom_round(x.bbox[1], tolerance * 2)), x.bbox[0]))
     for line in lines:
-        if current_y is None or abs(line.bbox[1] - current_y) <= tolerance:
-            current_group.append(line)
-            current_y = line.bbox[1]
+        if "is concerned," in line.text:
+            contains_phrase = True
+        last_line_last_word = grouped_lines[-1][-1] if grouped_lines else None
+        if not last_line_last_word:
+            grouped_lines.append([line])
+        elif abs(line.bbox[1] - last_line_last_word.bbox[1]) < tolerance:
+            # it is within tolerance of the last line
+            if line.bbox[0]  <= (last_line_last_word.bbox[2] + max_space):
+                grouped_lines[-1].append(line)
         else:
-            grouped_lines.append(current_group)
-            current_group = [line]
-            current_y = line.bbox[1]
-
-    if current_group:
-        grouped_lines.append(current_group)
-
+            grouped_lines.append([line])
     return grouped_lines
+
+
+
 
 def classify_line(line_group, common_styles, median_length):
     style_counts = defaultdict(int)
     for line in line_group:
-        for span in line.spans:
+        for span in line.spans:  # line[5] is the original line object
             style = (span.is_bold, span.is_italic, is_all_caps(span.text), span.size, line.style)
             style_counts[style] += 1
 
@@ -69,6 +73,7 @@ def classify_line(line_group, common_styles, median_length):
         return 'header'
     else:
         return 'header'
+    
 
 def merge_lines(lines):
     merged_text = ' '.join(line.text.strip() for line in lines)
@@ -88,7 +93,6 @@ def parse_pdf(pdf_path, output_path, max_pages=100, merge_headers=True):
     for node in parsed_doc.nodes:
         if node.bbox[0].page >= max_pages:
             break
-
         lines = []
         for element in node.elements:
             if isinstance(element, openparse.TextElement):
