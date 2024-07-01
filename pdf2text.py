@@ -41,8 +41,6 @@ def group_lines(lines, tolerance=3, max_space=40):
     grouped_lines = []
     lines.sort(key=lambda x: (-int(custom_round(x.bbox[1], tolerance * 2)), x.bbox[0]))
     for line in lines:
-        if "is concerned," in line.text:
-            contains_phrase = True
         last_line_last_word = grouped_lines[-1][-1] if grouped_lines else None
         if not last_line_last_word:
             grouped_lines.append([line])
@@ -57,10 +55,11 @@ def group_lines(lines, tolerance=3, max_space=40):
 
 
 
+
 def classify_line(line_group, common_styles, median_length):
     style_counts = defaultdict(int)
     for line in line_group:
-        for span in line.spans:  # line[5] is the original line object
+        for span in line.spans:  
             style = (span.is_bold, span.is_italic, is_all_caps(span.text), span.size, line.style)
             style_counts[style] += 1
 
@@ -69,8 +68,10 @@ def classify_line(line_group, common_styles, median_length):
 
     if most_frequent_style in common_styles:
         return 'paragraph'
-    elif line_length < median_length * 0.6 and (most_frequent_style[0] or most_frequent_style[2]):
+    elif line_length < median_length * 0.6:
         return 'header'
+    elif len(style_counts) > 2:
+        return 'paragraph'
     else:
         return 'header'
     
