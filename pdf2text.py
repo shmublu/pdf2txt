@@ -57,6 +57,7 @@ def group_lines(lines, tolerance=3, max_space=40):
 
 
 def classify_line(line_group, common_styles, median_length):
+    print(line_group)
     style_counts = defaultdict(int)
     for line in line_group:
         for span in line.spans:  
