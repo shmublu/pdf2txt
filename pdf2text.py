@@ -91,7 +91,6 @@ def parse_pdf(pdf_path, output_path, max_pages=100, merge_headers=True):
 
     page_lines = defaultdict(list)
     line_lengths = []
-
     for node in parsed_doc.nodes:
         if node.bbox[0].page >= max_pages:
             break
@@ -104,6 +103,8 @@ def parse_pdf(pdf_path, output_path, max_pages=100, merge_headers=True):
         page_lines[node.bbox[0].page].extend(grouped_lines)
         line_lengths.extend(sum(len(line.text) for line in group) for group in grouped_lines)
 
+    if len(line_lengths) == 0:
+        exit("The parser was unable to extract any text from the PDF. This is usually the fault of the parser, not the PDF itself.")
     median_length = sorted(line_lengths)[len(line_lengths) // 2]
 
     with open(output_path, 'w') as output_file:
